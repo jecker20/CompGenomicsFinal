@@ -14,7 +14,7 @@ def parse_syntheticDNA(fn):
             names.append(name)
             st = fh.readline().strip()
             reads.append(st)
-    return reads, names
+    return reads, names # ! could probbably use a dict here
 
 def parse_syntheticProt(fn):
     reads = []
@@ -50,16 +50,21 @@ def make_dataset_index(reads, names, k):
 
 # CURRENTL NON-FUNCTIONAL
 #EXACT MATCHING: filters out size differences
-def exact_matches(peptides, indexDict, pepts, k):
+def exact_matches(peptides, indexDict, prots, pNames, k):
     matches = defaultdict(list)
     for p in peptides:
         for n in indexDict.keys():
-            if p[:k] in indexDict[n]:
-                for o in indexDict[n][p[:k]]:
-                    if genome[o:o+len(p)] == p:
-                        matches[p].append(o)
-                        matches[p] = list(set(matches[p]))
+            currIdx = indexDict[n]
+            if p[:k] in currIdx:
+                offset = pNames.index(n)
+                if len(p) != len(prots[offset]):
+                    pass
+                else:
+                    if p == prots[offset]:
+                        matches[p].append(n)
     return matches
+                
+
 
 
 
@@ -230,4 +235,7 @@ if __name__ == "__main__":
     print(orfs)
     print(peptides)
 
+    mats = exact_matches(peptides, protIndex, pepts, pNames, protK)
+
+    print(mats)
     
