@@ -1,37 +1,39 @@
-#AOA
-# Modified code form solutions provided for hw2
+# AOA
+# Part of code inspired and drawn from provided solutions to homework 2
+
 import sys
 from collections import defaultdict
 
+# Parses through SYNTHETIC DNA reads file and stores reads
+# into a dict w/ names as keys
 def parse_syntheticDNA(fn):
-    reads = []
-    names = []
+    dct = {}
     with open(fn, 'rt') as fh:
         while True:
             name = fh.readline().strip()
             if len(name) == 0:
                 break
-            names.append(name)
             st = fh.readline().strip()
-            reads.append(st)
-    return reads, names # ! could probbably use a dict here
+            dct[name] = st
+    return dct 
 
+# Parses through SYNTHETIC TRANSLATED PETIDES file and stores reads
+# into a dict w/ names as keys
 def parse_syntheticProt(fn):
-    reads = []
-    names = []
+    dct = {}
     with open(fn, 'rt') as fh:
         while True:
             name = fh.readline().strip()
             if len(name) == 0:
                 break
-            if name[0] != '>': # check that its not junk
+            if name[0] != '>': # check that its not junk (synthetic property)
                 break
             name = name[1:]
-            names.append(name)
             st = fh.readline().strip()
-            reads.append(st)
-    return reads, names
+            dct[name] = st
+    return dct
 
+# makes a kmer index - derived from solution in homework 2
 def make_index(text, k):
     index = defaultdict(list)
     for i in range(len(text) - k + 1):
@@ -39,35 +41,14 @@ def make_index(text, k):
         index[substr].append(i)
     return index
 
+# makes a dict of kmer indexs for multiple reads/proteins
+def make_dataset_index(reads, k):
+    indexDict = {}
+    for n in reads.keys():
+        indexDict[n] = make_index(reads[n], k)
+    return indexDict
 
-def make_dataset_index(reads, names, k):
-    if len(reads) != len(names):
-        raise Exception("#names != #reads")
-    index = {}
-    for i in range(len(reads)): # this has to be for data in set
-        index[names[i]] = make_index(reads[i], k)
-    return index
-
-# CURRENTL NON-FUNCTIONAL
-#EXACT MATCHING: filters out size differences
-def exact_matches(peptides, indexDict, prots, pNames, k):
-    matches = defaultdict(list)
-    for p in peptides:
-        for n in indexDict.keys():
-            currIdx = indexDict[n]
-            if p[:k] in currIdx:
-                offset = pNames.index(n)
-                if len(p) != len(prots[offset]):
-                    pass
-                else:
-                    if p == prots[offset]:
-                        matches[p].append(n)
-    return matches
-                
-
-
-
-
+# Helper function: returns reverse compliment of a DNA sequence
 def revComp(seq):
     str = ""
     tmp = seq[::-1]
@@ -84,12 +65,15 @@ def revComp(seq):
                 str += 'C'
     return str
 
+# Helper function: returns list of 6 possible ORFs of a DNA sequence
 def make_orfs(seq):
     revSeq = revComp(seq)
     orfs = [seq, seq[1:], seq[2:], revSeq, revSeq[1:], revSeq[2:]]
     return orfs
 
-def transcript(seq):
+# Helper function: returns transcript of a DNA sequence into RNA
+# to aid translation
+def transcribe(seq):
     rna = ""
     for b in seq:
         match b:
@@ -104,19 +88,19 @@ def transcript(seq):
     
     return rna
 
+# Helper function: returns peptide sequence of a given RNA sequence
 def translate(seq):
-    seq = transcript(seq)
+    seq = transcribe(seq)
     codons = [seq[i:i+3] for i in range(0, len(seq), 3)] # separate codons
     pep = ""
     for c in codons:
         if len(c) < 3:
             break
-        #print(c)
         pep += codon_match(c)
-    #print(pep)
     
     return pep
 
+# Helper function: translates matches a codon to appropiate amino
 def codon_match(codon):
     amino = ''
     match codon[0]: # read first base
@@ -203,6 +187,23 @@ def codon_match(codon):
     
     return amino
 
+# MAIN NAIVE LOOKUP FUNCTION: takes all 6 possible ORF peptide sequences
+# and finds if their is matches in synProtein data kmerIndex dictionary
+# DISCLAIMER: does NOT interact with DNA read kmer indexs of any sort.
+def exact_matches(peptides, protIndexDict, synProts, k):
+    matches = defaultdict(list)
+    for p in peptides:
+        for n in protIndexDict.keys():
+            currIdx = protIndexDict[n]
+            if p[:k] in currIdx:
+                name = n
+                if len(p) != len(synProts[name]):
+                    pass
+                else:
+                    if p == synProts[name]:
+                        matches[p].append(n)
+    return matches
+
 
 
 if __name__ == "__main__":
@@ -211,16 +212,18 @@ if __name__ == "__main__":
     infile = sys.argv[3]
     outFile = sys.argv[4]
 
-    readK = 4
+    dnaK = 4
     protK = 4
 
-    reads, dNames = parse_syntheticDNA(dnaFile)
+    synReads = parse_syntheticDNA(dnaFile) # more relevant to "shared k-mer location" search
+    synProts = parse_syntheticProt(protFile)
 
-    pepts, pNames = parse_syntheticProt(protFile)
+    #readIndex = make_dataset_index(synReads, readK)
+    protIndex = make_dataset_index(synProts, protK)
 
-    readIndex = make_dataset_index(reads, dNames, readK)
-    protIndex = make_dataset_index(pepts, pNames, protK)
+    print(synProts)
 
+    # !!!!!!!!!!! TWEAK HERE TO HANDLE INPUTS REQURIED FOR BENCHMARKING !!!!!!!!!!!!!!
     with open(infile, 'r') as fh:
         p = fh.readline().strip()
 
@@ -230,12 +233,9 @@ if __name__ == "__main__":
     for frame in orfs:
         peptides.append(translate(frame))
 
-    #print(translate(reads[4]))
+    #print(orfs)
+    #print(peptides)
 
-    print(orfs)
-    print(peptides)
-
-    mats = exact_matches(peptides, protIndex, pepts, pNames, protK)
+    mats = exact_matches(peptides, protIndex, synProts, protK)
 
     print(mats)
-    
