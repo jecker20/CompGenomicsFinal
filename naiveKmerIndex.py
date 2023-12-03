@@ -1,12 +1,19 @@
-# AOA
-# Part of code inspired and drawn from provided solutions to homework 2
+# NAIVE KMER INDEX SEARCHING PROGRAM 
 
 import sys
 from collections import defaultdict
 
-# Parses through SYNTHETIC DNA reads file and stores reads
-# into a dict w/ names as keys
+
 def parse_syntheticDNA(fn):
+    """_summary_
+
+    Args:
+        fn (function): _description_
+
+    Returns:
+        dct : A dictionary with the read names as keys
+            to their respective sequences
+    """
     dct = {}
     with open(fn, 'rt') as fh:
         while True:
@@ -17,7 +24,7 @@ def parse_syntheticDNA(fn):
             dct[name] = st
     return dct 
 
-# Parses through SYNTHETIC TRANSLATED PETIDES file and stores reads
+# Parses through SYNTHETIC PEPTIDE SEQUENCES file and stores reads
 # into a dict w/ names as keys
 def parse_syntheticProt(fn):
     dct = {}
@@ -26,14 +33,15 @@ def parse_syntheticProt(fn):
             name = fh.readline().strip()
             if len(name) == 0:
                 break
-            if name[0] != '>': # check that its not junk (synthetic property)
+            if name[0] != '>': # check its data (synthetic property)
                 break
-            name = name[1:]
+            name = name[1:] # remove arrowhead
             st = fh.readline().strip()
             dct[name] = st
     return dct
 
-# makes a kmer index - derived from solution in homework 2
+""" 
+"""
 def make_index(text, k):
     index = defaultdict(list)
     for i in range(len(text) - k + 1):
@@ -49,25 +57,14 @@ def make_dataset_index(reads, k):
     return indexDict
 
 # Helper function: returns reverse compliment of a DNA sequence
-def revComp(seq):
-    str = ""
-    tmp = seq[::-1]
+def reverse(seq):
+    str = seq[::-1]
 
-    for n in tmp:
-        match n:
-            case 'A':
-                str += 'T'
-            case 'T':
-                str += 'A'
-            case 'C':
-                str += 'G'
-            case 'G':
-                str += 'C'
     return str
 
 # Helper function: returns list of 6 possible ORFs of a DNA sequence
 def make_orfs(seq):
-    revSeq = revComp(seq)
+    revSeq = reverse(seq)
     orfs = [seq, seq[1: len(seq) - 2], seq[2: len(seq) - 1], revSeq, revSeq[1: len(seq) - 2], revSeq[2: len(seq) - 1]]
     return orfs
 
@@ -204,29 +201,34 @@ def exact_matches(read, peptides, protIndexDict, synProts, k):
                         matches[str(read) + '-' + str(i + 1)] = n
     return matches
 
-
-
-if __name__ == "__main__":
-    dnaFile = sys.argv[1]
-    protFile = sys.argv[2]
-    outFile = sys.argv[3]
-
-    dnaK = 4
-    protK = 4
-
+# Main function called, seperated for benchmarking
+def main(kVal, protFile, dnaFile, outFile):
+    # Read Input
     synReads = parse_syntheticDNA(dnaFile)
     synProts = parse_syntheticProt(protFile)
 
-    #readIndex = make_dataset_index(synReads, readK)
-    protIndex = make_dataset_index(synProts, protK)
-
+    # Make Dateset Index
+    protIndex = make_dataset_index(synProts, kVal)
+    #readIndex = make_dataset_index(synReads, readK) # more relevant to "shared-kmer" searching
+    
+    # Output
     with open(outFile, 'w') as outh:
         for k in synReads.keys():
             orfs = make_orfs(synReads[k])
             peptides = []
             for frame in orfs:
                 peptides.append(translate(frame))
-            mats = exact_matches(k, peptides, protIndex, synProts, protK)
+            mats = exact_matches(k, peptides, protIndex, synProts, kVal)
             for k in mats.keys():
                 outh.write(str(k) + ',' + mats[k] + '\n')
-        
+
+
+if __name__ == "__main__":
+    # Input
+    dnaFile = sys.argv[1]
+    protFile = sys.argv[2]
+    outFile = sys.argv[3]
+
+    # Call Main Function
+    main(5, protFile, dnaFile, outFile)
+
