@@ -68,7 +68,7 @@ def revComp(seq):
 # Helper function: returns list of 6 possible ORFs of a DNA sequence
 def make_orfs(seq):
     revSeq = revComp(seq)
-    orfs = [seq, seq[1:], seq[2:], revSeq, revSeq[1:], revSeq[2:]]
+    orfs = [seq, seq[1: len(seq) - 2], seq[2: len(seq) - 1], revSeq, revSeq[1: len(seq) - 2], revSeq[2: len(seq) - 1]]
     return orfs
 
 # Helper function: returns transcript of a DNA sequence into RNA
@@ -190,18 +190,18 @@ def codon_match(codon):
 # MAIN NAIVE LOOKUP FUNCTION: takes all 6 possible ORF peptide sequences
 # and finds if their is matches in synProtein data kmerIndex dictionary
 # DISCLAIMER: does NOT interact with DNA read kmer indexs of any sort.
-def exact_matches(peptides, protIndexDict, synProts, k):
-    matches = defaultdict(list)
-    for p in peptides:
+def exact_matches(read, peptides, protIndexDict, synProts, k):
+    matches = defaultdict()
+    for i in range(len(peptides)):
         for n in protIndexDict.keys():
             currIdx = protIndexDict[n]
-            if p[:k] in currIdx:
+            if peptides[i][:k] in currIdx:
                 name = n
-                if len(p) != len(synProts[name]):
+                if len(peptides[i]) != len(synProts[name]):
                     pass
                 else:
-                    if p == synProts[name]:
-                        matches[p].append(n)
+                    if peptides[i] == synProts[name]:
+                        matches[str(read) + '-' + str(i + 1)] = n
     return matches
 
 
@@ -209,33 +209,24 @@ def exact_matches(peptides, protIndexDict, synProts, k):
 if __name__ == "__main__":
     dnaFile = sys.argv[1]
     protFile = sys.argv[2]
-    infile = sys.argv[3]
-    outFile = sys.argv[4]
+    outFile = sys.argv[3]
 
     dnaK = 4
     protK = 4
 
-    synReads = parse_syntheticDNA(dnaFile) # more relevant to "shared k-mer location" search
+    synReads = parse_syntheticDNA(dnaFile)
     synProts = parse_syntheticProt(protFile)
 
     #readIndex = make_dataset_index(synReads, readK)
     protIndex = make_dataset_index(synProts, protK)
 
-    print(synProts)
-
-    # !!!!!!!!!!! TWEAK HERE TO HANDLE INPUTS REQURIED FOR BENCHMARKING !!!!!!!!!!!!!!
-    with open(infile, 'r') as fh:
-        p = fh.readline().strip()
-
-    orfs = make_orfs(p)
-    peptides = []
-
-    for frame in orfs:
-        peptides.append(translate(frame))
-
-    #print(orfs)
-    #print(peptides)
-
-    mats = exact_matches(peptides, protIndex, synProts, protK)
-
-    print(mats)
+    with open(outFile, 'w') as outh:
+        for k in synReads.keys():
+            orfs = make_orfs(synReads[k])
+            peptides = []
+            for frame in orfs:
+                peptides.append(translate(frame))
+            mats = exact_matches(k, peptides, protIndex, synProts, protK)
+            for k in mats.keys():
+                outh.write(str(k) + ',' + mats[k] + '\n')
+        
