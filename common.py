@@ -44,23 +44,6 @@ def make_dataset_index(reads, k):
         indexDict[n] = make_index(reads[n], k)
     return indexDict
 
-# Helper function: returns reverse compliment of a DNA sequence
-def revComp(seq):
-    str = ""
-    tmp = seq[::-1]
-
-    for n in tmp:
-        match n:
-            case 'A':
-                str += 'T'
-            case 'T':
-                str += 'A'
-            case 'C':
-                str += 'G'
-            case 'G':
-                str += 'C'
-    return str
-
 # Helper function: returns list of 6 possible ORFs of a DNA sequence
 def make_orfs(seq):
     revSeq = seq[::-1]
