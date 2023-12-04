@@ -60,9 +60,9 @@ def main(k, protein_file, read_file, output_file):
 
     matches = find_matches(read_mkers, protein_index)
 
-    with open(output_file, 'w') as f:
-        for read_frame_name, protein_name in matches:
-            f.write(f"{read_frame_name},{protein_name}\n")
+    #with open(output_file, 'w') as f:
+    #    for read_frame_name, protein_name in matches:
+    #        f.write(f"{read_frame_name},{protein_name}\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
