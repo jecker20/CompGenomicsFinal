@@ -190,7 +190,7 @@ def codon_match(codon):
 def exact_matches(read, peptides, protIndexDict, synProts, k):
     matches = defaultdict()
     for i in range(len(peptides)):
-        for n in protIndexDict.keys():
+        for n in protIndexDict.copy().keys():
             currIdx = protIndexDict[n]
             if peptides[i][:k] in currIdx:
                 name = n
@@ -199,6 +199,7 @@ def exact_matches(read, peptides, protIndexDict, synProts, k):
                 else:
                     if peptides[i] == synProts[name]:
                         matches[str(read) + '-' + str(i + 1)] = n
+                        protIndexDict.pop(n)
     return matches
 
 # Main function called, seperated for benchmarking
