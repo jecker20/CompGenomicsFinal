@@ -1,4 +1,5 @@
 import java.io.FileWriter;
+import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
 import java.util.ArrayList;
@@ -11,147 +12,154 @@ public class Main {
     //instantiate constant variables
 
     //bounds of read length
-    final int LOWERBOUNDLENGTH = 40;
-    final int UPPERBOUNDLENGTH = 50;
+    final int LENGTH = 100;
+    double bound = LENGTH *0.2;
+    final int LOWERBOUNDLENGTH = LENGTH - (int) bound;
+    final int UPPERBOUNDLENGTH = LENGTH - (int) bound;
 
-    //output file names
-    String outputProteinFileName = "ProteinOutputShortTest1.txt";
-    String outputReadFileName = "ReadOutputShortTest1.txt";
+    int numberOfFiles = 10;
+    for (int a = 0; a < numberOfFiles; a++) {
+      //output file names
+      String outputProteinFileName = LENGTH +"-"+numberOfFiles+"-"+a+"-"+"protein.txt";
+      String outputReadFileName = LENGTH +"-"+numberOfFiles+"-"+a+"-"+"read.txt";
 
-    //total number of reads
-    final int NUMOFREADS = 10;
+      //random vairables
+      Random random = new Random();
+      String read = "";
 
-    //how much of the protein has no read associated
-    final double PERCENTOFJUNK = 0;
+      //total number of reads
+      final int NUMOFREADS = 300;
 
-    //how many of the possible proteins do we store
-    final double PERCENTOFPROTEINTOKEEP = 0.2;
+      //how much of the protein has no read associated
+      final double PERCENTOFJUNK = random.nextDouble();
 
-    //store reads and amino acids in lists
-    List<String[]> reads = new ArrayList<>();
-    List<String[]> aminoAcids = new ArrayList<>();
+      //how many of the possible proteins do we store
+      final double PERCENTOFPROTEINTOKEEP = random.nextDouble();
 
-    //file writers
-    FileWriter outputRead = new FileWriter(outputReadFileName);
-    FileWriter outputProtein = new FileWriter(outputProteinFileName);
+      //store reads and amino acids in lists
+      List<String[]> reads = new ArrayList<>();
+      List<String[]> aminoAcids = new ArrayList<>();
 
-    //random vairables
-    Random random = new Random();
-    String read = "";
-
-    //for loop to create all reads
-    for (int i = 0; i < NUMOFREADS; i++) {
-      //randomly decides length of read
-      int length = random.nextInt((UPPERBOUNDLENGTH + 1) - LOWERBOUNDLENGTH) + LOWERBOUNDLENGTH;
-
-      //makes sure read length of multiple of 3
-      length = length - length % 3;
-
-      //creates read
-      read = genNewRead(length);
-
-      //stores read and name in array
-      String[] newRead = new String[2];
-      String readName = "read" + i;
-      newRead[0] = readName;
-      newRead[1] = read;
-
-      //adds read arrays to a list and prints them to output
-      reads.add(newRead);
-      outputRead.write(readName + "\n");
-      outputRead.write(read + "\n");
-    }
-
-    //for loop to iterate over all reading frames of all generated reads
-    for (int i = 0; i < reads.size(); i++) {
-      //gets read data from array stored in list reads
-      String[] readArr = reads.get(i);
-      String readName = readArr[0];
-      read = readArr[1];
-      int length = read.length();
-
-      //creates all reading frames
-      String forwardFrame1 = read;
-      String forwardFrame2 = forwardFrame1.substring(1, length - 2);
-      String forwardFrame3 = forwardFrame1.substring(2, length - 1);
-      String backwardFrame1 = reverseRead(new StringBuilder(forwardFrame1).reverse().toString());
-      String backwardFrame2 = reverseRead(new StringBuilder(forwardFrame2).reverse().toString());
-      String backwardFrame3 = reverseRead(new StringBuilder(forwardFrame3).reverse().toString());
-
-      //converts frames to RNA
-      String forwardFrame1RNA = makeRNA(forwardFrame1);
-      String forwardFrame2RNA = makeRNA(forwardFrame2);
-      String forwardFrame3RNA = makeRNA(forwardFrame3);
-      String backwardFrame1RNA = makeRNA(backwardFrame1);
-      String backwardFrame2RNA = makeRNA(backwardFrame2);
-      String backwardFrame3RNA = makeRNA(backwardFrame3);
-
-      //converts RNA to Amino Acids
-      String forwardFrame1AminoAcid = makeAminoAcid(forwardFrame1RNA);
-      String forwardFrame2AminoAcid = makeAminoAcid(forwardFrame2RNA);
-      String forwardFrame3AminoAcid = makeAminoAcid(forwardFrame3RNA);
-      String backwardFrame1AminoAcid = makeAminoAcid(backwardFrame1RNA);
-      String backwardFrame2AminoAcid = makeAminoAcid(backwardFrame2RNA);
-      String backwardFrame3AminoAcid = makeAminoAcid(backwardFrame3RNA);
+      //file writers
+      FileWriter outputRead = new FileWriter(outputReadFileName);
+      FileWriter outputProtein = new FileWriter(outputProteinFileName);
 
 
-      //stores all amino acids in same method as reads
-      String[] ff1Arr = new String[2];
-      ff1Arr[0] = "read"+i+"-1";
-      ff1Arr[1] = forwardFrame1AminoAcid;
-      aminoAcids.add(ff1Arr);
+      //for loop to create all reads
+      for (int i = 0; i < NUMOFREADS; i++) {
+        //randomly decides length of read
+        int length = random.nextInt((UPPERBOUNDLENGTH + 1) - LOWERBOUNDLENGTH) + LOWERBOUNDLENGTH;
 
-      String[] ff2Arr = new String[2];
-      ff2Arr[0] = "read"+i+"-2";
-      ff2Arr[1] = forwardFrame2AminoAcid;
-      aminoAcids.add(ff2Arr);
+        //makes sure read length of multiple of 3
+        length = length - length % 3;
 
-      String[] ff3Arr = new String[2];
-      ff3Arr[0] = "read"+i+"-3";
-      ff3Arr[1] = forwardFrame3AminoAcid;
-      aminoAcids.add(ff3Arr);
+        //creates read
+        read = genNewRead(length);
 
-      String[] bf1Arr = new String[2];
-      bf1Arr[0] = "read"+i+"-4";
-      bf1Arr[1] = backwardFrame1AminoAcid;
-      aminoAcids.add(bf1Arr);
+        //stores read and name in array
+        String[] newRead = new String[2];
+        String readName = "read" + i;
+        newRead[0] = readName;
+        newRead[1] = read;
 
-      String[] bf2Arr = new String[2];
-      bf2Arr[0] = "read"+i+"-5";
-      bf2Arr[1] = backwardFrame2AminoAcid;
-      aminoAcids.add(bf2Arr);
-
-      String[] bf3Arr = new String[2];
-      bf3Arr[0] = "read"+i+"-6";
-      bf3Arr[1] = backwardFrame3AminoAcid;
-      aminoAcids.add(bf3Arr);
-
-    }
-
-    //for loop to print out amino acids
-    for (int i = 0; i<aminoAcids.size(); i++) {
-      double rand = random.nextDouble();
-
-      //determines if protein is retained based on set paramaters
-      if (rand <= PERCENTOFPROTEINTOKEEP) {
-        String[] aminoAcidArr = aminoAcids.get(i);
-        String name = aminoAcidArr[0];
-        String sequence = aminoAcidArr[1];
-        outputProtein.write(">" + name + "\n");
-        outputProtein.write(sequence + "\n");
+        //adds read arrays to a list and prints them to output
+        reads.add(newRead);
+        outputRead.write(readName + "\n");
+        outputRead.write(read + "\n");
       }
-    }
 
-    //for loop to generate junk proteins based on set parameters
-    double numJunk = aminoAcids.size() * PERCENTOFJUNK * PERCENTOFPROTEINTOKEEP;
-    for (int i = 0; i<numJunk; i++) {
-      int randLength = random.nextInt((UPPERBOUNDLENGTH + 1) - LOWERBOUNDLENGTH) + LOWERBOUNDLENGTH;
-      String aminoAcid = genAminoAcid(randLength);
-      outputProtein.write("readJunk" +i+"\n");
-      outputProtein.write(aminoAcid+"" +"\n");
+      //for loop to iterate over all reading frames of all generated reads
+      for (int i = 0; i < reads.size(); i++) {
+        //gets read data from array stored in list reads
+        String[] readArr = reads.get(i);
+        String readName = readArr[0];
+        read = readArr[1];
+        int length = read.length();
+
+        //creates all reading frames
+        String forwardFrame1 = read;
+        String forwardFrame2 = forwardFrame1.substring(1, length - 2);
+        String forwardFrame3 = forwardFrame1.substring(2, length - 1);
+        String reverseFrame = new StringBuilder(forwardFrame1).reverse().toString();
+        String backwardFrame1 = reverseFrame;
+        String backwardFrame2 = reverseFrame.substring(1, length - 2);
+        String backwardFrame3 = reverseFrame.substring(2, length - 1);
+
+        //converts frames to RNA
+        String forwardFrame1RNA = makeRNA(forwardFrame1);
+        String forwardFrame2RNA = makeRNA(forwardFrame2);
+        String forwardFrame3RNA = makeRNA(forwardFrame3);
+        String backwardFrame1RNA = makeRNA(backwardFrame1);
+        String backwardFrame2RNA = makeRNA(backwardFrame2);
+        String backwardFrame3RNA = makeRNA(backwardFrame3);
+
+        //converts RNA to Amino Acids
+        String forwardFrame1AminoAcid = makeAminoAcid(forwardFrame1RNA);
+        String forwardFrame2AminoAcid = makeAminoAcid(forwardFrame2RNA);
+        String forwardFrame3AminoAcid = makeAminoAcid(forwardFrame3RNA);
+        String backwardFrame1AminoAcid = makeAminoAcid(backwardFrame1RNA);
+        String backwardFrame2AminoAcid = makeAminoAcid(backwardFrame2RNA);
+        String backwardFrame3AminoAcid = makeAminoAcid(backwardFrame3RNA);
+
+
+        //stores all amino acids in same method as reads
+        String[] ff1Arr = new String[2];
+        ff1Arr[0] = "read" + i + "-1";
+        ff1Arr[1] = forwardFrame1AminoAcid;
+        aminoAcids.add(ff1Arr);
+
+        String[] ff2Arr = new String[2];
+        ff2Arr[0] = "read" + i + "-2";
+        ff2Arr[1] = forwardFrame2AminoAcid;
+        aminoAcids.add(ff2Arr);
+
+        String[] ff3Arr = new String[2];
+        ff3Arr[0] = "read" + i + "-3";
+        ff3Arr[1] = forwardFrame3AminoAcid;
+        aminoAcids.add(ff3Arr);
+
+        String[] bf1Arr = new String[2];
+        bf1Arr[0] = "read" + i + "-4";
+        bf1Arr[1] = backwardFrame1AminoAcid;
+        aminoAcids.add(bf1Arr);
+
+        String[] bf2Arr = new String[2];
+        bf2Arr[0] = "read" + i + "-5";
+        bf2Arr[1] = backwardFrame2AminoAcid;
+        aminoAcids.add(bf2Arr);
+
+        String[] bf3Arr = new String[2];
+        bf3Arr[0] = "read" + i + "-6";
+        bf3Arr[1] = backwardFrame3AminoAcid;
+        aminoAcids.add(bf3Arr);
+
+      }
+
+      //for loop to print out amino acids
+      for (int i = 0; i < aminoAcids.size(); i++) {
+        double rand = random.nextDouble();
+
+        //determines if protein is retained based on set paramaters
+        if (rand <= PERCENTOFPROTEINTOKEEP) {
+          String[] aminoAcidArr = aminoAcids.get(i);
+          String name = aminoAcidArr[0];
+          String sequence = aminoAcidArr[1];
+          outputProtein.write(">" + name + "\n");
+          outputProtein.write(sequence + "\n");
+        }
+      }
+
+      //for loop to generate junk proteins based on set parameters
+      double numJunk = aminoAcids.size() * PERCENTOFJUNK * PERCENTOFPROTEINTOKEEP;
+      for (int i = 0; i < numJunk; i++) {
+        int randLength = random.nextInt((UPPERBOUNDLENGTH + 1) - LOWERBOUNDLENGTH) + LOWERBOUNDLENGTH;
+        String aminoAcid = genAminoAcid(randLength);
+        outputProtein.write(">junkRead" + i + "\n");
+        outputProtein.write(aminoAcid + "" + "\n");
+      }
+      outputRead.close();
+      outputProtein.close();
     }
-    outputRead.close();
-    outputProtein.close();
   }
 
   //method to provide the complement of a strand (read input should already be reversed)
@@ -374,4 +382,5 @@ public class Main {
     }
     return aminoAcid;
   }
+
 }
