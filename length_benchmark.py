@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('-f', '--files', required=True, type=int, help="number of files")
     parser.add_argument('-r', '--repeats', type=int, default=10, help="repeats per files")
     parser.add_argument('-k', '--k', required=True, type=int, help="k value to use")
-    parser.add_argument('-m', '--mode', required=True, choices=["naive", "fancy"], help="which matching mode to use")
+    parser.add_argument('-m', '--mode', required=True, choices=["naive", "shared", "random"], help="which matching mode to use")
     args = parser.parse_args()
 
     return args
@@ -24,7 +24,10 @@ def input_names(length, reads, i):
 def benchmark(args, matcher):
     for i in range(args.files):
         protein_file, dna_file = input_names(args.length, args.number, i)
-        f = lambda: matcher(args.k, protein_file, dna_file, output_file=None, repeats=args.repeats)
+        if args.mode == "random":
+            f = lambda: matcher(args.k, protein_file, dna_file, output_file=None, randomize=True, repeats=args.repeats)
+        else:
+            f = lambda: matcher(args.k, protein_file, dna_file, output_file=None, repeats=args.repeats)
         total_time = timeit.Timer(f).timeit(number=1)
 
         print(total_time/args.repeats)
@@ -32,7 +35,6 @@ def benchmark(args, matcher):
 if __name__ == "__main__":
     args = parse_args()
 
-    assert(args.mode == "naive" or args.mode == "fancy")
     matcher = naive if args.mode == "naive" else less_naive
     print(f"Using {args.mode} matching strategy\n")
 

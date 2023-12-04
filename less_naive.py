@@ -1,9 +1,10 @@
 import argparse
+import random
 
 from common import parse_syntheticProt, parse_syntheticDNA, make_orfs, translate
 
 class KMerIndex:
-    def __init__(self, k, sequences):
+    def __init__(self, k, sequences, randomize=False):
         self.k = k
         self.data = sequences
         self.index = {}
@@ -12,8 +13,11 @@ class KMerIndex:
         for name, seq in sequences.items():
             self.add_sequence(name, seq)
 
-        self.most_shared = list(self.index.keys())
-        self.most_shared.sort(key = lambda s: self.counts[s], reverse=True)
+        self.kmers = list(self.index.keys())
+        if randomize:
+            random.shuffle(self.kmers)
+        else:
+            self.kmers.sort(key = lambda s: self.counts[s], reverse=True)
 
     def add_sequence(self, name, seq):
         if self.k == 0 or len(seq) < self.k:
@@ -52,13 +56,13 @@ def is_match(r_hit, p_hit, k, reads, proteins):
     if read == protein:
         return True
 
-def find_matches(read_kmers: KMerIndex, protein_kmers: KMerIndex):
+def find_matches(read_index: KMerIndex, protein_index: KMerIndex, randomize: bool):
     matches = set()
     matched = set()
 
-    for kmer in read_kmers.most_shared:
-        p_hits = protein_kmers.get(kmer)
-        r_hits = read_kmers.get(kmer)
+    for kmer in read_index.kmers:
+        p_hits = protein_index.get(kmer)
+        r_hits = read_index.get(kmer)
         for p in p_hits:
             for r in r_hits:
                 read_name = r[0]
@@ -67,13 +71,13 @@ def find_matches(read_kmers: KMerIndex, protein_kmers: KMerIndex):
                 if read_name in matched:
                     continue
 
-                if is_match(r, p, read_kmers.k, read_kmers.data, protein_kmers.data):
+                if is_match(r, p, read_index.k, read_index.data, protein_index.data):
                     matches.add((read_name, protein_name))
                     matched.add(read_name)
 
     return matches
 
-def main(k, protein_file, read_file, output_file=None, repeats=1):
+def main(k, protein_file, read_file, output_file=None, randomize=False, repeats=1):
     proteins = parse_syntheticProt(protein_file)
     reads = parse_syntheticDNA(read_file)
 
@@ -87,8 +91,8 @@ def main(k, protein_file, read_file, output_file=None, repeats=1):
                 for read_name, read in reads.items()
                 for i, frame in enumerate(make_orfs(read)) }
 
-        read_mkers = KMerIndex(k, peptide_reads)
-        matches = find_matches(read_mkers, protein_index)
+        read_mkers = KMerIndex(k, peptide_reads, randomize)
+        matches = find_matches(read_mkers, protein_index, randomize)
 
     if output_file:
         with open(output_file, 'w') as f:
