@@ -6,6 +6,8 @@ from collections import defaultdict
 from common import parse_syntheticProt, parse_syntheticDNA, make_orfs, translate
 
 def make_index(text, k):
+    if k >= len(text):
+        raise Exception("k value is larger than sequence length")
     index = defaultdict(list)
     for i in range(len(text) - k + 1):
         substr = text[i:i+k]
