@@ -1,17 +1,28 @@
+"""Shared k-mer matching algorithm implementation"""
+
 import argparse
 import random
 
 from common import parse_syntheticProt, parse_syntheticDNA, make_orfs, translate
 
 class KMerIndex:
+    """k-mer index, capable of handling multiple input sequences"""
+
     def __init__(self, k, sequences, randomize=False):
+        """Constructs index for given sequences and k-value.
+        
+        Sequences should be a list of tuples, where each tuple is (sequence name, sequence).
+
+        List of all k-mers is created, either sorted by total number of occurences (in decreasing order),
+        or in a random order if the `randomize` flag is specified.
+        """
         self.k = k
         self.data = sequences
         self.index = {}
         self.counts = {}
 
         for name, seq in sequences.items():
-            self.add_sequence(name, seq)
+            self._add_sequence(name, seq)
 
         self.kmers = list(self.index.keys())
         if randomize:
@@ -19,7 +30,8 @@ class KMerIndex:
         else:
             self.kmers.sort(key = lambda s: self.counts[s], reverse=True)
 
-    def add_sequence(self, name, seq):
+    def _add_sequence(self, name, seq):
+        """Internal function to index a new sequence"""
         if self.k == 0 or len(seq) < self.k:
             return
         
@@ -32,21 +44,35 @@ class KMerIndex:
             self.counts[s] += 1
 
     def size(self):
+        """Total number of distinct k-mers"""
         return len(self.index)
 
-    def get(self, key):
+    def get(self, kmer):
+        """Retrieve list of occurences of given k-mer.
+        
+        Return value is list of tuples in form (sequence name, index of occurence)
+        """
         try:
-            return self.index[key]
+            return self.index[kmer]
         except:
             return []
 
-    def contains(self, key):
-        return key in self.index
+    def contains(self, kmer):
+        """Whether the index contains any occurences of the given k-mer."""
+        return kmer in self.index
 
-def is_match(r_hit, p_hit, k, reads, proteins):
-    protein_name, h_loc = p_hit
-    read_name, r_loc = r_hit
+def is_match(read_hit, protein_hit, reads, proteins):
+    """Determines whether (read occurence, protein occurence) pair is a match.
+    
+    read_hit, protein_hit should be (name, index) format of KMerIndex occurences.
+    reads, proteins should be Dict[sequence name, sequence value].
+    """
+    protein_name, h_loc = protein_hit
+    read_name, r_loc = read_hit
 
+    # Given critical assumption that read errors are edit errors only, we can eliminate
+    # any hits that *don't* occur at the same location. If we wanted to remove this
+    # assumption, we would instead have a tolerance for how far apart the hits can be.
     if h_loc != r_loc:
         return False
 
@@ -56,7 +82,13 @@ def is_match(r_hit, p_hit, k, reads, proteins):
     if read == protein:
         return True
 
-def find_matches(read_index: KMerIndex, protein_index: KMerIndex, randomize: bool):
+def find_matches(read_index: KMerIndex, protein_index: KMerIndex):
+    """Finds all occurences of reads within proteins, given constructed
+    k-mer index for both.
+
+    Returns:
+        List[Tuple[str, str]]: List of (read name, protein name) matches
+    """
     matches = set()
     matched = set()
 
@@ -71,13 +103,23 @@ def find_matches(read_index: KMerIndex, protein_index: KMerIndex, randomize: boo
                 if read_name in matched:
                     continue
 
-                if is_match(r, p, read_index.k, read_index.data, protein_index.data):
+                if is_match(r, p, read_index.data, protein_index.data):
                     matches.add((read_name, protein_name))
                     matched.add(read_name)
 
     return matches
 
 def main(k, protein_file, read_file, output_file=None, randomize=False, repeats=1):
+    """Run our matching algorithm
+
+    Args:
+        k (int): k-value for k-mer indices
+        protein_file (str): proteins file path (FASTQ-inspired format)
+        read_file (str): DNA reads file path (FASTQ-inspired format)
+        output_file (str, optional): File path to save matches to. Defaults to None.
+        randomize (bool, optional): Whether to randomize k-mer search order. Defaults to False.
+        repeats (int, optional): Repeat matching process (for benchmarking). Defaults to 1.
+    """
     proteins = parse_syntheticProt(protein_file)
     reads = parse_syntheticDNA(read_file)
 
@@ -92,7 +134,7 @@ def main(k, protein_file, read_file, output_file=None, randomize=False, repeats=
                 for i, frame in enumerate(make_orfs(read)) }
 
         read_mkers = KMerIndex(k, peptide_reads, randomize)
-        matches = find_matches(read_mkers, protein_index, randomize)
+        matches = find_matches(read_mkers, protein_index)
 
     if output_file:
         with open(output_file, 'w') as f:
