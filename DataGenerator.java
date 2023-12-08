@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Hashtable;
 import java.util.List;
-public class Main {
+public class DataGenerator {
   public static void main(String[] args) throws IOException {
 
     //instantiate constant variables
