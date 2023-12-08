@@ -27,7 +27,16 @@ Input: Variables matchedFile and proteinFile are modifiable vairbales that must 
 # Naive search
 The naive search program reads in synthetic genetic and protein sequences data and stores is it in a dictionary that assigns seqeunce names as keys to the seqeunce within the program. The protein data dictionary is then used to make a dictionary of k-mer indices of each protein sequence with their seqeunce names assigned as keys to their respective k-mer index. The program then takes the genetic data dictionary and goes through each read and translates all 6 possible open reading frames into peptide sequences. These are then searched against the dictionary of protein k-mer indices to find a match using the k-length prefixes as the initial search. If prefixes match, then a length-checking heuristic is applied and if the string lengths do not match, then further comparison is skipped. This is possible under the assumption that all macthes are perfect and complete. If lengths do match, the program continues comparisons with the python "==" operator to check the seqeunces do indeed match. If a mathc is found the seqeunce is removed from the protion k-mer index dictionary. A dicitonary is returned, with open reading frame sequence names (named in-program) as keys to the sequence name in the synthetic protein file. To run the program on terminal, 3 command-line arguments are needed (in order): synthetic DNA data file name, synthetic protein data file name, and an output file name. The program will write an output file with the given name that has all matches on separate lines. k-value is modified direclty in the code as an argument for the main funciton.
 
-# K-mer search
+# Shared K-mer search
+
+Usage:
+```
+python less_naive.py [-h] -k <k-mer k-value> -p <proteins file path> -r <DNA read file path> -o <output file path>
+```
+Example:
+```
+python .\less_naive.py -k 4 -p .\100-10\100-10-0-protein.txt -r .\100-10\100-10-0-read.txt -o match_output.txt
+```
 
 # Benchmarks
 
