@@ -30,7 +30,7 @@ def benchmark(args, matcher):
             f = lambda: matcher(args.k, protein_file, dna_file, output_file=None, repeats=args.repeats)
         total_time = timeit.Timer(f).timeit(number=1)
 
-        print(total_time/args.repeats)
+        print(total_time)
 
 if __name__ == "__main__":
     args = parse_args()
