@@ -28,7 +28,6 @@ Input: Variables matchedFile and proteinFile are modifiable vairbales that must 
 
 # K-mer search
 
-
 # Benchmarks
 
 ### Performance benchmark for read length and number of reads
@@ -52,4 +51,6 @@ python k_benchmark.py --kmin <value> --kmax <value> --kstep <value> -l <read len
 ```
 
 Example:
-
+```
+python k_benchmark.py --kmin 5 --kmax 50 --kstep 2 -l 100 -n 10 -f 10 -r 5 -m shared
+```
