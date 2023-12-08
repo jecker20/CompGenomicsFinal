@@ -1,8 +1,14 @@
-from collections import defaultdict
+"""Common helper/utility functions used across code base"""
 
-# Parses through SYNTHETIC DNA reads file and stores reads
-# into a dict w/ names as keys
 def parse_syntheticDNA(fn):
+    """Parse synthetic DNA reads from file into dict indexed by read name.
+
+    Args:
+        fn (str): read file name
+
+    Returns:
+        Dict[str, str]: Dict with read name as key, DNA sequence as value
+    """
     dct = {}
     with open(fn, 'rt') as fh:
         while True:
@@ -13,9 +19,15 @@ def parse_syntheticDNA(fn):
             dct[name] = st
     return dct 
 
-# Parses through SYNTHETIC TRANSLATED PETIDES file and stores reads
-# into a dict w/ names as keys
 def parse_syntheticProt(fn):
+    """Parse synthetic proteins from file into dict indexed by protein name.
+
+    Args:
+        fn (str): protein file name
+
+    Returns:
+        Dict[str, str]: Dict with protein name as key, amino acid sequence as value
+    """
     dct = {}
     with open(fn, 'rt') as fh:
         while True:
@@ -29,30 +41,21 @@ def parse_syntheticProt(fn):
             dct[name] = st
     return dct
 
-# makes a kmer index - derived from solution in homework 2
-def make_index(text, k):
-    index = defaultdict(list)
-    for i in range(len(text) - k + 1):
-        substr = text[i:i+k]
-        index[substr].append(i)
-    return index
-
-# makes a dict of kmer indexs for multiple reads/proteins
-def make_dataset_index(reads, k):
-    indexDict = {}
-    for n in reads.keys():
-        indexDict[n] = make_index(reads[n], k)
-    return indexDict
-
-# Helper function: returns list of 6 possible ORFs of a DNA sequence
 def make_orfs(seq):
+    """Given nucleo sequence, produces 6 possible open reading frames
+
+    Args:
+        seq (str): input DNA/RNA sequence, length must be multiple of three!
+
+    Returns:
+        List[str]: list of open reading frames
+    """
     revSeq = seq[::-1]
     orfs = [seq, seq[1:-2], seq[2:-1], revSeq, revSeq[1:-2], revSeq[2:-1]]
     return orfs
 
-# Helper function: returns transcript of a DNA sequence into RNA
-# to aid translation
 def transcribe(seq):
+    """Transcribes DNA sequence to RNA"""
     rna = ""
     for b in seq:
         match b:
@@ -67,8 +70,8 @@ def transcribe(seq):
     
     return rna
 
-# Helper function: returns peptide sequence of a given RNA sequence
 def translate(seq):
+    """Translate RNA sequence into amino acid sequence"""
     seq = transcribe(seq)
     codons = [seq[i:i+3] for i in range(0, len(seq), 3)] # separate codons
     pep = ""
@@ -79,8 +82,15 @@ def translate(seq):
     
     return pep
 
-# Helper function: translates matches a codon to appropiate amino
 def codon_match(codon):
+    """Translates single codon to amino acid
+
+    Args:
+        codon (List[str,3]): length 3 nucleo sequence
+
+    Returns:
+        char: amino acid single-letter code 
+    """
     amino = ''
     match codon[0]: # read first base
         case 'A':
@@ -165,3 +175,18 @@ def codon_match(codon):
             pass
     
     return amino
+
+def input_names(length, reads, i):
+    """Constructs protein/read file paths based on benchmark parameters
+
+    Args:
+        length (int): average length of each read
+        reads (int): total number of reads per file
+        i (int): file number
+
+    Returns:
+        Tuple[str, str]: protein file path, read file name
+    """
+    folder = f"{length}-{reads}"
+    base = f"{length}-{reads}-{i}"
+    return f"{folder}/{base}-protein.txt", f"{folder}/{base}-read.txt"
